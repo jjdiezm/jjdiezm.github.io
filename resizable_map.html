@@ -264,8 +264,7 @@
       }
 
       d3.queue()
-        //.defer(d3.json, "ct_towns_simplified.topojson")
-        .defer(d3.json, "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson")
+        .defer(d3.json, "ct_towns_simplified.topojson")
         .defer(d3.csv, "driving_times_from_avon.csv", build_driving_map)
         .defer(d3.csv, "towns_run.csv", build_races_run_map)
         .defer(d3.csv, "races2017.csv", parseRaces)
