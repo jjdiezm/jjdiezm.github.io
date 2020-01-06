@@ -173,7 +173,7 @@
         row.Day = +row.Day;
         row.Weekday = +row.Weekday;
         row.DateString = fmt(row.Month) + "/" + fmt(row.Day);
-        row.raceDay = d3.timeDay(new Date(2017, row.Month-1, row.Day));
+        row.raceDay = d3.timeDay(new Date(2020, row.Month-1, row.Day));
         const daysToRace = d3.timeDay.count(today, row.raceDay);
         if(daysToRace >= 0 && daysToRace <= 14) {
           const raceString = "<tr><td><span class='racedate'>" + 
