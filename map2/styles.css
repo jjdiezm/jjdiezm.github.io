@@ -1,0 +1,33 @@
+@import url("https://fonts.googleapis.com/css?family=Roboto");
+body {
+  margin: 0px;
+  overflow: hidden;
+}
+
+.sphere {
+  fill: #d9e6fa;
+}
+
+.country {
+  stroke: black;
+  stroke-width: 0.05px;
+}
+
+.country.highlighted {
+  stroke-width: 0.5px;
+}
+
+.country {
+  cursor: pointer;
+}
+
+.tick text {
+  font-size: 1em;
+  fill: black;
+  font-family: Roboto, sans-serif;
+}
+
+.tick circle {
+  stroke: black;
+  stroke-opacity: 0.5;
+}
