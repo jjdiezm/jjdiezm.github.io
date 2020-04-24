@@ -1,0 +1,336 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Jet2 Transfer Management API",
+    "description": "This API is to enable Jet2's transfer agents to be able to submit the customer collection times for customers going from their hotel back to the airport. It will enable you to submit customer collection times up to 12 months in advance.\r\n\r\n## Request Flow\r\n1. Retreive an authorisation token (TBC).\r\n2. Use the token in all subsequent requests.\r\n3. GET a list of properties for a given destination (IATA code). It is recommended that you map the Jet2 Property Identifiers to your own set of properties.\r\n4. GET a list of flights for a destination and a month. You may already have this data, we will validate it against our flight data.\r\n5. POST to the Collection Time endpoint.\r\n * The are a number of validation rules for a set of Collection Times\r\n   1. The request must contain all flights for the month.\r\n   2. The properties must be in the destination for the request (See the properties endpoint)\r\n   3. The `CollectionTimeTo` must be before the `TargetTime`.\r\n   4. The `CollectionTimeFrom` must be before the `CollectionTimeTo`.\r\n   5. The Flight Data must match our data.\r\n6. Collection Times can be overwritten by submitting a request for the same destination and month.",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/v1/CollectionTime": {
+      "post": {
+        "tags": [
+          "CollectionTime"
+        ],
+        "summary": "Endpoint to Add a Collection Time",
+        "requestBody": {
+          "description": "AddCollectionTimeRequest request.",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddCollectionTimeRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddCollectionTimeRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddCollectionTimeRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddCollectionTimeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/v1/Flight/search": {
+      "get": {
+        "tags": [
+          "Flight"
+        ],
+        "summary": "Gets the flights by destination and month.",
+        "parameters": [
+          {
+            "name": "iataCode",
+            "in": "query",
+            "description": "The iata code.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "description": "The month. Use any day in the month",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FlightModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/Property/{iataCode}": {
+      "get": {
+        "tags": [
+          "Property"
+        ],
+        "summary": "Gets the properties by destination.",
+        "parameters": [
+          {
+            "name": "iataCode",
+            "in": "path",
+            "description": "The iata code.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropertyModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CollectionTime": {
+        "required": [
+          "collectionTimeFrom",
+          "collectionTimeTo",
+          "flightGroupId",
+          "propertyGroupId",
+          "targetTime"
+        ],
+        "type": "object",
+        "properties": {
+          "propertyGroupId": {
+            "type": "integer",
+            "description": "The Property Group identifier which was set in PropertyGroups.",
+            "format": "int32"
+          },
+          "flightGroupId": {
+            "type": "integer",
+            "description": "The Flight Group identifier which was set in PropertyGroups.",
+            "format": "int32"
+          },
+          "collectionTimeFrom": {
+            "type": "string",
+            "description": "The earliest time the customer will be collected from.",
+            "format": "date-time"
+          },
+          "collectionTimeTo": {
+            "type": "string",
+            "description": "The earliest latest the customer will be collected from.",
+            "format": "date-time"
+          },
+          "targetTime": {
+            "type": "string",
+            "description": "The time the transfer will arrive at the airport.",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DayInMonth": {
+        "required": [
+          "day"
+        ],
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "description": "The day.",
+            "format": "date-time"
+          },
+          "collectionTimes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectionTime"
+            },
+            "description": "The collection times.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PropertyMeetingPointModel": {
+        "required": [
+          "meetingPoint",
+          "propertyId"
+        ],
+        "type": "object",
+        "properties": {
+          "meetingPoint": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string",
+            "description": "The meeting point where the customers will be collected from.",
+            "nullable": true
+          },
+          "propertyId": {
+            "type": "integer",
+            "description": "Jet2's property identifier",
+            "format": "int32"
+          },
+          "propertyName": {
+            "type": "string",
+            "description": "The name of the property",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PropertyGroup": {
+        "required": [
+          "propertyGroupId"
+        ],
+        "type": "object",
+        "properties": {
+          "propertyGroupId": {
+            "type": "integer",
+            "description": "An arbitrary identifier. It must be unique in the set of PropertyGroups.",
+            "format": "int32"
+          },
+          "properties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertyMeetingPointModel"
+            },
+            "description": "Array properties and their meeting points.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FlightModel": {
+        "required": [
+          "flightDepartureTime",
+          "flightNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "flightNumber": {
+            "maxLength": 8,
+            "minLength": 3,
+            "type": "string",
+            "description": "The flight number. It should be in the format LS123.",
+            "nullable": true
+          },
+          "flightDepartureTime": {
+            "type": "string",
+            "description": "The flight departure time.",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FlightGroup": {
+        "required": [
+          "flightGroupId"
+        ],
+        "type": "object",
+        "properties": {
+          "flightGroupId": {
+            "type": "integer",
+            "description": "An arbitrary identifier. It must be unique in the set of FlightGroups.",
+            "format": "int32"
+          },
+          "flights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FlightModel"
+            },
+            "description": "An array of flights.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AddCollectionTimeRequest": {
+        "type": "object",
+        "properties": {
+          "daysInMonth": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DayInMonth"
+            },
+            "description": "All the days in the month where there are flights.",
+            "nullable": true
+          },
+          "iataCode": {
+            "type": "string",
+            "description": "The IATA code for the destination airport.",
+            "nullable": true
+          },
+          "propertyGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertyGroup"
+            },
+            "description": "Groups of properties. These groups are used in the CollectionTime model to set when customers will be picked up from those properties.",
+            "nullable": true
+          },
+          "flightGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FlightGroup"
+            },
+            "description": "Groups of flights. These groups are used in the CollectionTime model to set when customer will be picked for these flights.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PropertyModel": {
+        "required": [
+          "propertyId"
+        ],
+        "type": "object",
+        "properties": {
+          "propertyId": {
+            "type": "integer",
+            "description": "Jet2's property identifier",
+            "format": "int32"
+          },
+          "propertyName": {
+            "type": "string",
+            "description": "The name of the property",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "The property model."
+      }
+    }
+  }
+}
